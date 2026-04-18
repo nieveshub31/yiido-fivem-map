@@ -1,10 +1,9 @@
-
 <!DOCTYPE html>
 <html lang="tr">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GTA 5 Harita - Sabit Boyutlu İşaretçiler</title>
+    <title>GTA 5 Harita - Hareketli ve Sabit İşaretçiler</title>
     
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     
@@ -15,7 +14,7 @@
         #controls {
             position: fixed; top: 10px; left: 10px; z-index: 1000;
             background: rgba(0,0,0,0.9); padding: 20px; border-radius: 10px;
-            border: 1px solid #444; width: 260px;
+            border: 1px solid #444; width: 260px; max-height: 90vh; overflow-y: auto;
         }
 
         .section { border-bottom: 1px solid #333; padding-bottom: 15px; margin-bottom: 15px; }
@@ -26,54 +25,61 @@
 
         select { width: 100%; padding: 8px; background: #333; color: white; border: 1px solid #555; border-radius: 4px; }
         
+        .toggle-area { display: flex; align-items: center; justify-content: space-between; background: #222; padding: 8px; border-radius: 5px; margin-top: 5px; }
+        
         button {
             width: 100%; padding: 10px; border: none;
-            color: white; border-radius: 5px; cursor: pointer; font-weight: bold; margin-top: 5px; background: #c0392b;
+            color: white; border-radius: 5px; cursor: pointer; font-weight: bold; margin-top: 10px; background: #c0392b;
         }
 
-        /*/* CSS Bölümü - Bu kısmı bul ve değiştir */
-.pixel-marker { 
-    border: 2px solid white; 
-    box-sizing: border-box;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background-color: rgba(255,255,255,0.1); /* Resim yoksa hafif belli olur */
-}
+        /* İşaretçi Stilleri */
+        .pixel-marker { 
+            border: 2px solid white; 
+            box-sizing: border-box;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
 
-.pixel-marker div { 
-    width: 100%; 
-    height: 100%; 
-    background-size: contain !important; /* Resmi kutuya tam sığdırır */
-    background-position: center !important; /* Ortalar */
-    background-repeat: no-repeat !important; /* Tekrar etmez */
-    border-radius: inherit;
-}
+        .pixel-marker div { 
+            width: 100%; height: 100%; 
+            background-size: contain !important; 
+            background-position: center !important; 
+            background-repeat: no-repeat !important; 
+            border-radius: inherit;
+        }
 
-.marker-red { background-color: rgba(255, 0, 0, 0.6); }
-.marker-green { background-color: rgba(0, 255, 0, 0.6); }
+        .marker-red { background-color: rgba(255, 0, 0, 0.6); }
+        .marker-green { background-color: rgba(0, 255, 0, 0.6); }
+        
+        /* Düzenleme modu açıkken imleç değişsin */
+        .edit-mode-active .pixel-marker { cursor: move !important; }
     </style>
 </head>
 <body>
 
 <div id="controls">
     <div class="section">
-        <span class="section-title">1. Ana Harita</span>
-        <input type="file" id="mainMapInput" accept="image/*">
+        <span class="section-title">1. Haritaları Yükle</span>
+        <input type="file" id="mainMapInput" accept="image/*" title="Ana Harita">
+        <input type="file" id="markerImgInput" accept="image/*" style="margin-top:10px;" title="İşaretçi İkonu">
     </div>
 
     <div class="section">
-        <span class="section-title">2. İkon Yükle (İsteğe Bağlı)</span>
-        <input type="file" id="markerImgInput" accept="image/*">
+        <div class="toggle-area">
+            <span>Düzenleme (Taşıma)</span>
+            <input type="checkbox" id="editMode" checked>
+        </div>
+        <small style="font-size: 10px; color: #aaa;">*Kapatırsan objeler kilitlenir.</small>
     </div>
 
     <div class="section">
-        <span class="section-title">3. Sabit Boyut: <span id="sizeVal" class="val-label">40px</span></span>
+        <span class="section-title">2. Boyut: <span id="sizeVal" class="val-label">40px</span></span>
         <input type="range" id="sizeSlider" min="10" max="150" value="40">
     </div>
 
     <div class="section">
-        <span class="section-title">4. İşaretçi Tipi</span>
+        <span class="section-title">3. Tip Seçimi</span>
         <select id="typeSelect">
             <option value="red">Kırmızı Daire</option>
             <option value="green">Yeşil Daire</option>
@@ -81,7 +87,7 @@
         </select>
     </div>
 
-    <button onclick="clearAll()">Hafızayı Temizle</button>
+    <button onclick="clearAll()">Hafızayı Sıfırla</button>
 </div>
 
 <div id="map"></div>
@@ -89,46 +95,30 @@
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
 <script>
-    let savedData = JSON.parse(localStorage.getItem('gta_pixel_markers')) || [];
-    let savedMap = localStorage.getItem('gta_pixel_map');
+    let savedData = JSON.parse(localStorage.getItem('gta_final_data')) || [];
+    let savedMap = localStorage.getItem('gta_final_map');
     let customImgBase64 = null;
 
-    const map = L.map('map', { 
-        crs: L.CRS.Simple, 
-        minZoom: -4, 
-        maxZoom: 4 
-    });
-
+    const map = L.map('map', { crs: L.CRS.Simple, minZoom: -4, maxZoom: 4 });
     let currentMapLayer = null;
     let markersLayer = L.layerGroup().addTo(map);
 
-    // Ana Harita Yükleme
-    document.getElementById('mainMapInput').addEventListener('change', function(e) {
+    // Harita Yükleme
+    document.getElementById('mainMapInput').onchange = function(e) {
         const reader = new FileReader();
-        reader.onload = (ev) => { 
-            localStorage.setItem('gta_pixel_map', ev.target.result); 
-            initMap(ev.target.result); 
-        };
+        reader.onload = (ev) => { localStorage.setItem('gta_final_map', ev.target.result); initMap(ev.target.result); };
         reader.readAsDataURL(e.target.files[0]);
-    });
+    };
 
-// İkon Yükleme Kısmını Şununla Değiştir:
-    document.getElementById('markerImgInput').addEventListener('change', function(e) {
-        const file = e.target.files[0];
-        if (file.size > 1024 * 1024) { // 1MB'dan büyükse uyar
-            alert("İşaretçi görseli çok büyük! Lütfen daha küçük (KB boyutunda) bir görsel seç.");
-            return;
-        }
-        
+    // İkon Yükleme
+    document.getElementById('markerImgInput').onchange = function(e) {
         const reader = new FileReader();
         reader.onload = (ev) => { 
             customImgBase64 = ev.target.result; 
             document.getElementById('typeSelect').value = 'custom_img';
-            // Görsel yüklendiğinde önizlemede siyah çıkmaması için:
-            console.log("İşaretçi görseli başarıyla yüklendi.");
         };
-        reader.readAsDataURL(file);
-    });
+        reader.readAsDataURL(e.target.files[0]);
+    };
 
     function initMap(src) {
         const img = new Image();
@@ -142,15 +132,11 @@
         img.src = src;
     }
 
-    const slider = document.getElementById('sizeSlider');
-    slider.oninput = () => document.getElementById('sizeVal').innerText = slider.value + "px";
-
-    // Ekrana Tıklandığında Ekle
+    // Tıklayınca Ekle
     map.on('click', function(e) {
         if (!currentMapLayer) return;
-
         const type = document.getElementById('typeSelect').value;
-        const size = parseInt(slider.value);
+        const size = parseInt(document.getElementById('sizeSlider').value);
         
         const obj = {
             id: Date.now(),
@@ -160,50 +146,53 @@
             type: type,
             img: type === 'custom_img' ? customImgBase64 : null
         };
-
         savedData.push(obj);
         saveAndRender();
     });
 
-   function renderMarkers() {
-    markersLayer.clearLayers();
-
-    savedData.forEach(data => {
-        // İçerideki resim veya renk stilini hazırlıyoruz
-        let divStyle = `width:100%; height:100%;`;
+    function renderMarkers() {
+        markersLayer.clearLayers();
+        const isEditable = document.getElementById('editMode').checked;
         
-        if(data.type === 'custom_img' && data.img) {
-            divStyle += `background-image: url(${data.img});`;
-        }
+        if(isEditable) document.body.classList.add('edit-mode-active');
+        else document.body.classList.remove('edit-mode-active');
 
-        const icon = L.divIcon({
-            className: `pixel-marker marker-${data.type}`,
-            iconSize: [data.size, data.size],
-            iconAnchor: [data.size/2, data.size/2],
-            html: `<div style="${divStyle}"></div>` // Resim burada basılıyor
+        savedData.forEach(data => {
+            let divStyle = `width:100%; height:100%;`;
+            if(data.type === 'custom_img' && data.img) divStyle += `background-image: url(${data.img});`;
+
+            const icon = L.divIcon({
+                className: `pixel-marker marker-${data.type}`,
+                iconSize: [data.size, data.size],
+                iconAnchor: [data.size/2, data.size/2],
+                html: `<div style="${divStyle}"></div>`
+            });
+
+            const marker = L.marker([data.lat, data.lng], { icon: icon, draggable: isEditable }).addTo(markersLayer);
+
+            // Hareket bitince yeni konumu kaydet
+            marker.on('dragend', function(ev) {
+                const newPos = ev.target.getLatLng();
+                const found = savedData.find(d => d.id === data.id);
+                if (found) { found.lat = newPos.lat; found.lng = newPos.lng; saveToStorage(); }
+            });
+
+            // Sağ tıkla silme
+            marker.on('contextmenu', () => {
+                savedData = savedData.filter(d => d.id !== data.id);
+                saveAndRender();
+            });
         });
-
-        const marker = L.marker([data.lat, data.lng], { icon: icon }).addTo(markersLayer);
-
-        marker.on('contextmenu', (ev) => {
-            savedData = savedData.filter(d => d.id !== data.id);
-            saveAndRender();
-        });
-    });
-}
-
-    function saveAndRender() {
-        localStorage.setItem('gta_pixel_markers', JSON.stringify(savedData));
-        renderMarkers();
     }
 
-    function clearAll() {
-        if(confirm("Tüm veriler silinecek!")) {
-            localStorage.clear();
-            location.reload();
-        }
-    }
+    const slider = document.getElementById('sizeSlider');
+    slider.oninput = () => document.getElementById('sizeVal').innerText = slider.value + "px";
 
+    function saveAndRender() { saveToStorage(); renderMarkers(); }
+    function saveToStorage() { localStorage.setItem('gta_final_data', JSON.stringify(savedData)); }
+    function clearAll() { if(confirm("Tüm veriler silinsin mi?")) { localStorage.clear(); location.reload(); } }
+
+    document.getElementById('editMode').onchange = renderMarkers;
     if (savedMap) initMap(savedMap);
     document.getElementById('map').oncontextmenu = () => false;
 </script>
