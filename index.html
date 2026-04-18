@@ -31,17 +31,27 @@
             color: white; border-radius: 5px; cursor: pointer; font-weight: bold; margin-top: 5px; background: #c0392b;
         }
 
-        /* Sabit Boyutlu Marker Stilleri */
-        .pixel-marker { 
-            border-radius: 50%; 
-            border: 2px solid white; 
-            box-sizing: border-box;
-            background-position: center;
-            background-size: cover;
-            background-repeat: no-repeat;
-        }
-        .marker-red { background-color: rgba(255, 0, 0, 0.7); box-shadow: 0 0 5px red; }
-        .marker-green { background-color: rgba(0, 255, 0, 0.7); box-shadow: 0 0 5px #00ff00; }
+        /*/* CSS Bölümü - Bu kısmı bul ve değiştir */
+.pixel-marker { 
+    border: 2px solid white; 
+    box-sizing: border-box;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: rgba(255,255,255,0.1); /* Resim yoksa hafif belli olur */
+}
+
+.pixel-marker div { 
+    width: 100%; 
+    height: 100%; 
+    background-size: contain !important; /* Resmi kutuya tam sığdırır */
+    background-position: center !important; /* Ortalar */
+    background-repeat: no-repeat !important; /* Tekrar etmez */
+    border-radius: inherit;
+}
+
+.marker-red { background-color: rgba(255, 0, 0, 0.6); }
+.marker-green { background-color: rgba(0, 255, 0, 0.6); }
     </style>
 </head>
 <body>
@@ -155,32 +165,32 @@
         saveAndRender();
     });
 
-    function renderMarkers() {
-        markersLayer.clearLayers();
+   function renderMarkers() {
+    markersLayer.clearLayers();
 
-        savedData.forEach(data => {
-            // CSS ile sabit boyutlu icon oluşturma
-            let style = `width:${data.size}px; height:${data.size}px;`;
-            if(data.type === 'custom_img' && data.img) {
-                style += `background-image: url(${data.img}); border:none;`;
-            }
+    savedData.forEach(data => {
+        // İçerideki resim veya renk stilini hazırlıyoruz
+        let divStyle = `width:100%; height:100%;`;
+        
+        if(data.type === 'custom_img' && data.img) {
+            divStyle += `background-image: url(${data.img});`;
+        }
 
-            const icon = L.divIcon({
-                className: `pixel-marker marker-${data.type}`,
-                iconSize: [data.size, data.size],
-                iconAnchor: [data.size/2, data.size/2], // Tam merkeze oturtur
-                html: `<div style="${style}"></div>`
-            });
-
-            const marker = L.marker([data.lat, data.lng], { icon: icon }).addTo(markersLayer);
-
-            // Sağ tık silme
-            marker.on('contextmenu', (ev) => {
-                savedData = savedData.filter(d => d.id !== data.id);
-                saveAndRender();
-            });
+        const icon = L.divIcon({
+            className: `pixel-marker marker-${data.type}`,
+            iconSize: [data.size, data.size],
+            iconAnchor: [data.size/2, data.size/2],
+            html: `<div style="${divStyle}"></div>` // Resim burada basılıyor
         });
-    }
+
+        const marker = L.marker([data.lat, data.lng], { icon: icon }).addTo(markersLayer);
+
+        marker.on('contextmenu', (ev) => {
+            savedData = savedData.filter(d => d.id !== data.id);
+            saveAndRender();
+        });
+    });
+}
 
     function saveAndRender() {
         localStorage.setItem('gta_pixel_markers', JSON.stringify(savedData));
