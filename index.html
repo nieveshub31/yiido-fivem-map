@@ -136,14 +136,67 @@
 
 <div id="login-overlay">
     <div class="login-box">
+        <div style="font-family: var(--font-tech); color: var(--primary-color); font-size: 10px; letter-spacing: 3px; margin-bottom: 10px;">SECURE ACCESS</div>
         <h2>YYİİDO NIEVES</h2>
-        <input type="password" id="passInput" placeholder="HAVALI ŞİFRE">
+        <input type="password" id="passInput" placeholder="SİSTEM ŞİFRESİ" autocomplete="off">
         <label style="display:flex; align-items:center; justify-content:center; gap:10px; margin-bottom:25px; cursor:pointer; font-size:13px; color:var(--text-muted); font-weight: 600;">
             <input type="checkbox" id="rememberCheck" style="accent-color:var(--primary-color); width:16px; height:16px;"> OTURUMU AÇIK TUT
         </label>
-        <button onclick="checkLogin()">GİRİŞ</button>
+        <button onclick="checkLogin()">SİSTEME GİRİŞ</button>
     </div>
 </div>
+
+<script>
+    // GİRİŞ KONTROLÜ (JS)
+    const _p = "knglrpsikersakatbırakır";
+
+    function checkLogin() {
+        const input = document.getElementById('passInput').value;
+        const remember = document.getElementById('rememberCheck').checked;
+
+        if (input === _p) {
+            // Başarılı giriş
+            if (remember) {
+                localStorage.setItem('map_auth_persistent', 'true');
+            }
+            sessionStorage.setItem('map_auth', 'true');
+            showMainContent();
+        } else { 
+            // Hatalı giriş
+            alert("ERİŞİM REDDEDİLDİ! Şifre hatalı."); 
+            document.getElementById('passInput').value = "";
+            document.getElementById('passInput').focus();
+        }
+    }
+
+    function showMainContent() {
+        const overlay = document.getElementById('login-overlay');
+        const content = document.getElementById('main-content');
+        
+        if (overlay) overlay.style.display = 'none';
+        if (content) content.style.display = 'block';
+        
+        // Uygulamayı başlat (Eğer daha önce başlatılmadıysa)
+        if (typeof initApp === "function" && !globalApp) {
+            initApp();
+        }
+    }
+
+    // Sayfa yüklendiğinde otomatik kontrol
+    window.addEventListener('load', () => {
+        const isAuth = localStorage.getItem('map_auth_persistent') === 'true' || 
+                       sessionStorage.getItem('map_auth') === 'true';
+        
+        if (isAuth) {
+            showMainContent();
+        }
+    });
+
+    // Enter tuşu desteği
+    document.getElementById('passInput').addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') checkLogin();
+    });
+</script>
 
 <div id="main-content">
     <div class="top-controls">
