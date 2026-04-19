@@ -11,7 +11,6 @@
             --bg-dark: #0c141d;
             --panel-bg: rgba(20, 26, 34, 0.98);
             --border-color: #333;
-            --accent-red: #ff4444;
             --input-bg: #1a222c;
         }
         
@@ -35,16 +34,18 @@
             background: var(--panel-bg); padding: 25px; border-radius: 16px;
             border: 1px solid var(--border-color); width: 280px;
             box-shadow: 0 8px 32px rgba(0,0,0,0.6); backdrop-filter: blur(12px);
-            max-height: 90vh; overflow-y: auto;
+            max-height: 90vh; 
+            overflow-x: hidden; /* Yatay kaydırmayı kesin olarak engeller */
+            overflow-y: auto;   /* Sadece dikey kaydırmaya izin verir */
             transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
         }
         
-        #controls.collapsed { transform: translateX(-310px); }
+        #controls.collapsed { transform: translateX(-315px); }
 
         /* KNGLRP Toggle Butonu */
         #toggle-handle {
             position: absolute;
-            right: -55px;
+            right: -46px; /* Butonun dışarı taşma miktarını düzelttim */
             top: 20px;
             width: 45px;
             height: 100px;
@@ -62,16 +63,19 @@
             letter-spacing: 2px;
             writing-mode: vertical-rl;
             text-orientation: mixed;
-            transition: background 0.3s;
+            transition: 0.3s;
             box-shadow: 5px 0 15px rgba(0,0,0,0.3);
+            pointer-events: auto;
         }
-        #toggle-handle:hover { background: #1a222c; color: #fff; }
+        #toggle-handle:hover { color: #fff; background: #1a222c; }
 
         .panel-header { font-size: 16px; font-weight: 800; color: var(--primary-color); margin-bottom: 25px; border-bottom: 1px solid var(--border-color); padding-bottom: 12px; }
         .section { margin-bottom: 25px; }
         .section-title { font-size: 10px; font-weight: 900; color: #666; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 12px; display: block; }
-        .input-group { background: var(--input-bg); border-radius: 10px; padding: 12px; border: 1px solid #2a3441; margin-bottom: 10px; }
-        select { background: #2a3441; color: white; border: none; padding: 10px; border-radius: 6px; width: 100%; margin-top: 8px; cursor: pointer; outline: none; }
+        .input-group { background: var(--input-bg); border-radius: 10px; padding: 12px; border: 1px solid #2a3441; margin-bottom: 10px; box-sizing: border-box; }
+        
+        input[type="file"], select { width: 100%; cursor: pointer; background: #2a3441; color: #ccc; border: none; border-radius: 6px; padding: 8px; box-sizing: border-box; }
+        select { margin-top: 8px; color: white; }
         
         .switch-group { display: flex; align-items: center; justify-content: space-between; background: var(--input-bg); padding: 15px; border-radius: 10px; border: 1px solid #2a3441; }
         .switch { position: relative; display: inline-block; width: 44px; height: 22px; }
@@ -84,6 +88,7 @@
         input[type="range"] { width: 100%; accent-color: var(--primary-color); margin-top: 10px; }
         .btn-action { width: 100%; padding: 14px; border: none; border-radius: 10px; font-weight: bold; cursor: pointer; transition: 0.3s; margin-top: 15px; }
         .btn-logout { background: #2a1212; color: #ff5555; border: 1px solid #441a1a; }
+        .btn-logout:hover { background: #441a1a; color: #fff; }
 
         .pixel-marker { border: 2px solid white; box-shadow: 0 0 15px rgba(0,0,0,0.5); border-radius: 4px; display: flex; align-items: center; justify-content: center; overflow: hidden; }
         .pixel-marker div { width: 100%; height: 100%; background-size: contain !important; background-position: center !important; }
@@ -116,8 +121,8 @@
             <div class="input-group">
                 <input type="file" id="markerImgInput" accept="image/*" style="margin-bottom:12px">
                 <select id="typeSelect">
-                    <option value="red">🔴 Kırmızı Nokta</option>
-                    <option value="green">🟢 Yeşil Nokta</option>
+                    <option value="red">🔴 Kırmızı Kare</option>
+                    <option value="green">🟢 Yeşil Kare</option>
                     <option value="custom_img">🖼️ Özel İkon</option>
                 </select>
                 <input type="range" id="sizeSlider" min="10" max="150" value="40">
@@ -126,7 +131,7 @@
         <div class="section">
             <span class="section-title">SİSTEM MODU</span>
             <div class="switch-group">
-                <span>Düzenleme Modu</span>
+                <span style="font-size:13px;">Düzenleme Modu</span>
                 <label class="switch"><input type="checkbox" id="editMode" checked><span class="slider"></span></label>
             </div>
         </div>
@@ -137,10 +142,10 @@
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
-    const _pArr = ['h','a','y','a','t','ç','o','k','z','o','r','y','a'];
+    const _p = ['h','a','y','a','t','ç','o','k','z','o','r','y','a'].join('');
 
     function checkLogin() {
-        if (document.getElementById('passInput').value === _pArr.join('')) {
+        if (document.getElementById('passInput').value === _p) {
             if (document.getElementById('rememberCheck').checked) localStorage.setItem('map_session', 'active');
             else sessionStorage.setItem('map_session', 'active');
             showMainContent();
