@@ -3,93 +3,104 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>yyiido nieves - Map System</title>
+    <title>yyiido nieves - Map System v8</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <style>
         :root {
-            --primary-color: #00ff00;
-            --bg-dark: #0c141d;
-            --panel-bg: rgba(20, 26, 34, 0.98);
-            --border-color: #333;
-            --input-bg: #1a222c;
-            --glow-color: rgba(0, 255, 0, 0.8);
-            --danger: #ff4444;
+            --primary-color: #00ff00; /* Neon Yeşil */
+            --danger-color: #ff4444;  /* Neon Kırmızı */
+            --bg-dark: #080c10;
+            --panel-bg: rgba(13, 17, 23, 0.96);
+            --border-color: #21262d;
+            --input-bg: #161b22;
+            --text-main: #c9d1d9;
+            --text-muted: #8b949e;
         }
         
-        body { margin: 0; padding: 0; background: var(--bg-dark); font-family: 'Segoe UI', sans-serif; color: white; overflow: hidden; }
-        * { -webkit-touch-callout: none; -webkit-user-select: none; user-select: none; }
+        body { margin: 0; padding: 0; background: var(--bg-dark); font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; color: var(--text-main); overflow: hidden; }
+        * { -webkit-touch-callout: none; -webkit-user-select: none; user-select: none; box-sizing: border-box; }
 
-        /* Giriş */
+        /* Giriş Ekranı */
         #login-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--bg-dark); z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center; }
-        .login-box { background: #1a1a1a; padding: 40px; border-radius: 20px; border: 1px solid var(--primary-color); text-align: center; width: 320px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
-        .login-box h2 { color: var(--primary-color); letter-spacing: 2px; margin-bottom: 25px; }
-        .login-box input[type="password"] { padding: 15px; width: 100%; border-radius: 8px; border: 1px solid #444; background: #222; color: white; margin-bottom: 20px; box-sizing: border-box; outline: none; }
-        .login-box button { width: 100%; padding: 15px; background: var(--primary-color); border: none; font-weight: bold; cursor: pointer; border-radius: 8px; color: #000; transition: 0.3s; }
+        .login-box { background: #161b22; padding: 40px; border-radius: 16px; border: 1px solid #30363d; text-align: center; width: 320px; box-shadow: 0 10px 30px rgba(0,0,0,0.7); }
+        .login-box h2 { color: var(--primary-color); letter-spacing: 2px; margin-bottom: 25px; font-size: 20px; font-weight: 800; }
+        .login-box input[type="password"] { padding: 15px; width: 100%; border-radius: 8px; border: 1px solid #30363d; background: #0d1117; color: white; margin-bottom: 20px; outline: none; transition: 0.2s; }
+        .login-box input[type="password"]:focus { border-color: var(--primary-color); box-shadow: 0 0 5px rgba(0,255,0,0.3); }
+        .login-box button { width: 100%; padding: 15px; background: var(--primary-color); border: none; font-weight: bold; cursor: pointer; border-radius: 8px; color: #000; transition: 0.2s; text-transform: uppercase; letter-spacing: 1px; }
+        .login-box button:hover { background: #00cc00; transform: translateY(-1px); }
 
+        /* Ana İçerik */
         #main-content { display: none; }
         #map { height: 100vh; width: 100vw; background: var(--bg-dark); z-index: 1; }
 
-        /* Logo Buton */
+        /* KNGLRP Logo Buton */
         #main-logo {
-            position: fixed; top: 20px; left: 20px; z-index: 1001;
-            font-weight: 900; font-size: 16px; letter-spacing: 3px;
-            color: #fff; background: var(--panel-bg); padding: 10px 20px;
-            border-radius: 8px; border: 1px solid var(--primary-color);
-            cursor: pointer; animation: kngl-glow 2s infinite alternate;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.5); transition: 0.3s;
+            position: fixed; top: 15px; left: 15px; z-index: 1001;
+            font-weight: 900; font-size: 15px; letter-spacing: 3px;
+            color: #fff; background: var(--panel-bg); padding: 10px 18px;
+            border-radius: 8px; border: 1px solid #30363d;
+            cursor: pointer; transition: 0.3s;
+            user-select: none;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
         }
-        @keyframes kngl-glow {
-            0% { text-shadow: 0 0 2px #fff, 0 0 5px var(--glow-color); box-shadow: 0 0 5px var(--glow-color); }
-            100% { text-shadow: 0 0 5px #fff, 0 0 15px var(--glow-color), 0 0 25px var(--primary-color); box-shadow: 0 0 15px var(--primary-color); }
-        }
+        #main-logo:hover { border-color: var(--primary-color); color: var(--primary-color); box-shadow: 0 0 10px rgba(0,255,0,0.5); }
 
-        /* Panel */
+        /* Sol Kontrol Paneli (Düzeltilmiş Tasarım) */
         #controls {
-            position: fixed; top: 80px; left: 20px; z-index: 1000;
-            background: var(--panel-bg); padding: 25px; border-radius: 16px;
-            border: 1px solid var(--border-color); width: 280px;
-            box-shadow: 0 8px 32px rgba(0,0,0,0.6); backdrop-filter: blur(12px);
+            position: fixed; top: 70px; left: 15px; z-index: 1000;
+            background: var(--panel-bg); padding: 20px; border-radius: 12px;
+            border: 1px solid var(--border-color); width: 260px; /* Biraz daha daraltıldı */
+            box-shadow: 0 8px 32px rgba(0,0,0,0.6); backdrop-filter: blur(15px); /* Daha güçlü blur */
             max-height: 85vh; overflow-y: auto; overflow-x: hidden;
             transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
         }
-        #controls.collapsed { transform: translateY(-20px) translateX(-350px); opacity: 0; pointer-events: none; }
+        #controls.collapsed { transform: translateY(-10px) translateX(-300px); opacity: 0; pointer-events: none; }
 
-        .panel-header { font-size: 13px; font-weight: 800; color: var(--primary-color); margin-bottom: 20px; border-bottom: 1px solid var(--border-color); padding-bottom: 10px; text-transform: uppercase; }
-        .section { margin-bottom: 20px; }
-        .section-title { font-size: 10px; font-weight: 900; color: #666; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 10px; display: block; }
-        .input-group { background: var(--input-bg); border-radius: 10px; padding: 12px; border: 1px solid #2a3441; margin-bottom: 10px; }
+        .panel-header { font-size: 12px; font-weight: 800; color: var(--primary-color); margin-bottom: 20px; border-bottom: 1px solid var(--border-color); padding-bottom: 10px; text-transform: uppercase; letter-spacing: 1px; }
+        .section { margin-bottom: 18px; }
+        .section-title { font-size: 9px; font-weight: 900; color: var(--text-muted); text-transform: uppercase; letter-spacing: 2px; margin-bottom: 8px; display: block; }
+        .input-group { background: var(--input-bg); border-radius: 8px; padding: 10px; border: 1px solid #21262d; margin-bottom: 8px; }
         
-        input[type="file"], select { width: 100%; cursor: pointer; background: #2a3441; color: white; border: none; border-radius: 6px; padding: 8px; box-sizing: border-box; outline: none; font-size: 12px; }
+        input[type="file"], select { width: 100%; cursor: pointer; background: #0d1117; color: var(--text-main); border: 1px solid #30363d; border-radius: 6px; padding: 7px; outline: none; font-size: 11px; }
+        input[type="file"] { color: var(--text-muted); }
         
-        .switch-group { display: flex; align-items: center; justify-content: space-between; background: var(--input-bg); padding: 12px; border-radius: 10px; border: 1px solid #2a3441; margin-bottom: 8px; }
-        .switch { position: relative; display: inline-block; width: 40px; height: 20px; }
+        /* Switch Tasarımı */
+        .switch-group { display: flex; align-items: center; justify-content: space-between; background: var(--input-bg); padding: 10px; border-radius: 8px; border: 1px solid #21262d; margin-bottom: 6px; }
+        .switch { position: relative; display: inline-block; width: 36px; height: 18px; }
         .switch input { opacity: 0; width: 0; height: 0; }
-        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #333; transition: .4s; border-radius: 20px; }
-        .slider:before { position: absolute; content: ""; height: 14px; width: 14px; left: 3px; bottom: 3px; background-color: white; transition: .4s; border-radius: 50%; }
+        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #30363d; transition: .3s; border-radius: 20px; }
+        .slider:before { position: absolute; content: ""; height: 12px; width: 12px; left: 3px; bottom: 3px; background-color: #8b949e; transition: .3s; border-radius: 50%; }
         input:checked + .slider { background-color: var(--primary-color); }
-        input:checked + .slider:before { transform: translateX(20px); }
+        input:checked + .slider:before { transform: translateX(18px); background-color: #000; }
 
-        .btn-action { width: 100%; padding: 12px; border: none; border-radius: 10px; font-weight: bold; cursor: pointer; transition: 0.3s; margin-top: 10px; text-transform: uppercase; font-size: 11px; }
-        .btn-clear { background: rgba(255, 68, 68, 0.1); color: var(--danger); border: 1px solid var(--danger); }
-        .btn-clear:hover { background: var(--danger); color: #fff; }
-        .btn-logout { background: #2a1212; color: #ff5555; border: 1px solid #441a1a; margin-top: 20px; }
+        input[type="range"] { width: 100%; accent-color: var(--primary-color); margin-top: 8px; cursor: pointer; }
 
-        /* Marker Styles */
-        .pixel-marker { border: 2px solid white; border-radius: 50%; box-shadow: 0 0 10px rgba(0,0,0,0.8); background: transparent !important; }
+        /* Butonlar */
+        .btn-action { width: 100%; padding: 10px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; transition: 0.2s; margin-top: 8px; text-transform: uppercase; font-size: 10px; letter-spacing: 1px; }
+        .btn-clear { background: rgba(244, 67, 54, 0.1); color: #f44336; border: 1px solid rgba(244, 67, 54, 0.4); }
+        .btn-clear:hover { background: #f44336; color: #fff; border-color: #f44336; }
+        .btn-logout { background: #21262d; color: var(--text-main); border: 1px solid #30363d; margin-top: 20px; }
+        .btn-logout:hover { background: #30363d; color: #fff; }
+
+        /* Marker Styles (Yeni Şeffaf ve Parlayan Tasarım) */
+        .pixel-marker { border-radius: 50%; display: flex; align-items: center; justify-content: center; overflow: hidden; background: transparent !important; }
         .pixel-marker div { width: 100%; height: 100%; border-radius: 50%; background-size: cover !important; }
+        
+        /* Özel Efektler İçin Sınıflar */
+        .glow-red { border: 3px solid var(--danger-color); box-shadow: 0 0 15px var(--danger-color), inset 0 0 5px rgba(255,68,68,0.3); }
+        .glow-green { border: 3px solid var(--primary-color); box-shadow: 0 0 15px var(--primary-color), inset 0 0 5px rgba(0,255,0,0.3); }
+        .glow-black { border: 3px solid #000000; box-shadow: 0 0 5px rgba(255,255,255,0.2); } /* Siyah için hafif dış aydınlatma */
     </style>
 </head>
-<body oncontextmenu="return false;">
-
-<div id="login-overlay">
+<body oncontextmenu="return false;"> <div id="login-overlay">
     <div class="login-box">
         <h2>SİSTEME GİRİŞ</h2>
         <input type="password" id="passInput" placeholder="Erişim Şifresi">
-        <label style="display:flex; align-items:center; gap:10px; margin-bottom:20px; cursor:pointer; font-size:14px; color:#888;">
-            <input type="checkbox" id="rememberCheck"> Beni Hatırla
+        <label style="display:flex; align-items:center; gap:8px; margin-bottom:20px; cursor:pointer; font-size:13px; color:var(--text-muted);">
+            <input type="checkbox" id="rememberCheck" style="accent-color:var(--primary-color)"> Beni Hatırla
         </label>
         <button onclick="checkLogin()">KİLİDİ AÇ</button>
-        <p id="error-msg" style="color:#ff4444; font-size:12px; margin-top:15px; display:none;">Hatalı şifre!</p>
+        <p id="error-msg" style="color:var(--danger-color); font-size:11px; margin-top:15px; display:none; font-weight:bold;">Hatalı şifre!</p>
     </div>
 </div>
 
@@ -107,31 +118,34 @@
         <div class="section">
             <span class="section-title">İŞARETÇİ AYARLARI</span>
             <div class="input-group">
-                <input type="file" id="markerImgInput" accept="image/*" style="margin-bottom:12px">
+                <input type="file" id="markerImgInput" accept="image/*" style="margin-bottom:10px">
                 <select id="typeSelect">
-                    <option value="red">⭕ Kırmızı Çember</option>
-                    <option value="green">⭕ Yeşil Çember</option>
-                    <option value="black">⭕ Siyah Çember</option>
+                    <option value="green">🟢 Yeşil Neon Çember</option>
+                    <option value="red">🔴 Kırmızı Neon Çember</option>
+                    <option value="black">⚫ Siyah Çember (Boş)</option>
                     <option value="custom_img">🖼️ Özel İkon</option>
                 </select>
-                <input type="range" id="sizeSlider" min="10" max="150" value="40">
+                <div style="margin-top: 10px;">
+                    <span style="font-size:9px; color:var(--text-muted); text-transform:uppercase;">Boyut</span>
+                    <input type="range" id="sizeSlider" min="15" max="150" value="45">
+                </div>
             </div>
         </div>
 
         <div class="section">
             <span class="section-title">MOD KONTROLLERİ</span>
             <div class="switch-group">
-                <span style="font-size:11px;">Düzenleme (Taşı/Sil)</span>
+                <span style="font-size:11px; color:var(--text-main);">Düzenleme (Taşı/Sil)</span>
                 <label class="switch"><input type="checkbox" id="editMode" checked onchange="refreshMap()"><span class="slider"></span></label>
             </div>
             <div class="switch-group">
-                <span style="font-size:11px; color:var(--primary-color);">İŞARETÇİ EKLEME</span>
+                <span style="font-size:11px; color:var(--primary-color); font-weight:bold;">İŞARETÇİ EKLEME</span>
                 <label class="switch"><input type="checkbox" id="addMode" checked><span class="slider"></span></label>
             </div>
-            <p style="font-size: 9px; color: #888; margin: 5px 0;">* Hareket ettirmek için "Ekleme" modunu kapatın.</p>
+            <p style="font-size: 9px; color: var(--text-muted); margin: 6px 0 0 4px;">* Haritayı hareket ettirmek için "Ekleme" modunu kapatın.</p>
         </div>
 
-        <div class="section" style="border-top: 1px solid #333; padding-top: 15px;">
+        <div class="section" style="border-top: 1px solid var(--border-color); padding-top: 15px;">
             <span class="section-title">VERİ YÖNETİMİ</span>
             <button class="btn-action btn-clear" onclick="confirmClear()">TÜMÜNÜ SİL</button>
             <button class="btn-action btn-logout" onclick="logout()">OTURUMU KAPAT</button>
@@ -143,12 +157,13 @@
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
-    const _p = ['h','a','y','a','t','ç','o','k','z','o','r','y','a'].join('');
+    // Şifre aynı: hayatçokzorya
+    const _pArr = ['h','a','y','a','t','ç','o','k','z','o','r','y','a'];
 
     function checkLogin() {
-        if (document.getElementById('passInput').value === _p) {
-            if (document.getElementById('rememberCheck').checked) localStorage.setItem('map_session', 'active');
-            else sessionStorage.setItem('map_session', 'active');
+        if (document.getElementById('passInput').value === _pArr.join('')) {
+            if (document.getElementById('rememberCheck').checked) localStorage.setItem('map_session_v8', 'active');
+            else sessionStorage.setItem('map_session_v8', 'active');
             showMainContent();
         } else { document.getElementById('error-msg').style.display = 'block'; }
     }
@@ -161,7 +176,7 @@
         initApp();
     }
 
-    window.onload = () => { if (localStorage.getItem('map_session')==='active' || sessionStorage.setItem('map_session')==='active') showMainContent(); };
+    window.onload = () => { if (localStorage.getItem('map_session_v8')==='active' || sessionStorage.getItem('map_session_v8')==='active') showMainContent(); };
 
     function logout() { localStorage.clear(); sessionStorage.clear(); location.reload(); }
 
@@ -169,13 +184,13 @@
     function refreshMap() { if(globalApp) globalApp.render(); }
     
     function confirmClear() {
-        if(confirm("DİKKAT! Tüm işaretçiler kalıcı olarak silinecek. Emin misin?")) {
+        if(confirm("DİKKAT! Tüm işaretçiler kalıcı olarak silinecek. Emin misin aşkım?")) {
             if(globalApp) globalApp.clearMarkers();
         }
     }
 
     function initApp() {
-        const dbName = "MapStore_v6";
+        const dbName = "MapStore_v8"; // Sürüm yükseltildi
         let db, savedMarkers = [], customIcon = null;
         const map = L.map('map', { crs: L.CRS.Simple, minZoom: -3, maxZoom: 3, zoomControl: false });
         let mapLayer = null, markerLayer = L.layerGroup().addTo(map);
@@ -221,7 +236,7 @@
         };
 
         map.on('click', e => {
-            // Sadece İşaretçi Modu AÇIKSA işaret ekler
+            // Ekleme modu kapalıysa hiçbir şey yapma (kaydırmaya izin ver)
             if (!mapLayer || !document.getElementById('addMode').checked) return;
             
             const markerData = { 
@@ -241,19 +256,19 @@
             const isEditable = document.getElementById('editMode').checked;
             
             savedMarkers.forEach(d => {
-                let borderColor = '#ffffff';
-                if (d.type === 'red') borderColor = '#ff4444';
-                else if (d.type === 'green') borderColor = '#00ff00';
-                else if (d.type === 'black') borderColor = '#000000';
+                // Renk ve parlama sınıfını belirle
+                let glowClass = '';
+                if (d.type === 'red') glowClass = 'glow-red';
+                else if (d.type === 'green') glowClass = 'glow-green';
+                else if (d.type === 'black') glowClass = 'glow-black';
 
+                // Şeffaf yapı ve özel parıltı sınıfları
                 const style = `
-                    background-image:${d.img?'url('+d.img+')':'none'}; 
-                    border: 3px solid ${borderColor};
-                    box-shadow: 0 0 10px ${borderColor === '#000000' ? 'rgba(255,255,255,0.2)' : borderColor};
+                    background-image:${d.img?'url('+d.img+')':'none'};
                 `;
                 
                 const icon = L.divIcon({ 
-                    className: 'pixel-marker', 
+                    className: `pixel-marker ${glowClass}`, // Sınıfı buraya ekledik
                     iconSize: [d.size, d.size], 
                     iconAnchor: [d.size/2, d.size/2], 
                     html: `<div style="${style}"></div>` 
