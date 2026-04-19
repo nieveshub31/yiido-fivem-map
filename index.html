@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>yyiido nieves - Map System v8</title>
+    <title>yyiido nieves - Map System v1.0</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <style>
         :root {
@@ -17,7 +17,7 @@
             --text-muted: #8b949e;
         }
         
-        body { margin: 0; padding: 0; background: var(--bg-dark); font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; color: var(--text-main); overflow: hidden; }
+        body { margin: 0; padding: 0; background: var(--bg-dark); font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; color: var(--text-main); overflow: hidden; cursor: crosshair; } /* Fare işareti crosshair yapıldı */
         * { -webkit-touch-callout: none; -webkit-user-select: none; user-select: none; box-sizing: border-box; }
 
         /* Giriş Ekranı */
@@ -45,12 +45,12 @@
         }
         #main-logo:hover { border-color: var(--primary-color); color: var(--primary-color); box-shadow: 0 0 10px rgba(0,255,0,0.5); }
 
-        /* Sol Kontrol Paneli (Düzeltilmiş Tasarım) */
+        /* Sol Kontrol Paneli */
         #controls {
             position: fixed; top: 70px; left: 15px; z-index: 1000;
             background: var(--panel-bg); padding: 20px; border-radius: 12px;
-            border: 1px solid var(--border-color); width: 260px; /* Biraz daha daraltıldı */
-            box-shadow: 0 8px 32px rgba(0,0,0,0.6); backdrop-filter: blur(15px); /* Daha güçlü blur */
+            border: 1px solid var(--border-color); width: 260px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.6); backdrop-filter: blur(15px);
             max-height: 85vh; overflow-y: auto; overflow-x: hidden;
             transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
         }
@@ -82,19 +82,19 @@
         .btn-logout { background: #21262d; color: var(--text-main); border: 1px solid #30363d; margin-top: 20px; }
         .btn-logout:hover { background: #30363d; color: #fff; }
 
-        /* Marker Styles (Yeni Şeffaf ve Parlayan Tasarım) */
+        /* Marker Styles (Şeffaf Renk Dolgulu) */
         .pixel-marker { border-radius: 50%; display: flex; align-items: center; justify-content: center; overflow: hidden; background: transparent !important; }
         .pixel-marker div { width: 100%; height: 100%; border-radius: 50%; background-size: cover !important; }
         
-        /* Özel Efektler İçin Sınıflar */
-        .glow-red { border: 3px solid var(--danger-color); box-shadow: 0 0 15px var(--danger-color), inset 0 0 5px rgba(255,68,68,0.3); }
-        .glow-green { border: 3px solid var(--primary-color); box-shadow: 0 0 15px var(--primary-color), inset 0 0 5px rgba(0,255,0,0.3); }
-        .glow-black { border: 3px solid #000000; box-shadow: 0 0 5px rgba(255,255,255,0.2); } /* Siyah için hafif dış aydınlatma */
+        /* Özel Efektler ve Şeffaf Dolgular */
+        .glow-red { border: 3px solid var(--danger-color); box-shadow: 0 0 15px var(--danger-color); background-color: rgba(255, 68, 68, 0.15) !important; } /* Kırmızı şeffaf dolgu */
+        .glow-green { border: 3px solid var(--primary-color); box-shadow: 0 0 15px var(--primary-color); background-color: rgba(0, 255, 0, 0.15) !important; } /* Yeşil şeffaf dolgu */
+        .glow-black { border: 3px solid #000000; box-shadow: 0 0 5px rgba(255,255,255,0.2); background-color: transparent !important; } /* Siyah içi boş */
     </style>
 </head>
 <body oncontextmenu="return false;"> <div id="login-overlay">
     <div class="login-box">
-        <h2>SİSTEME GİRİŞ</h2>
+        <h2>yyiido nieves - Map System</h2>
         <input type="password" id="passInput" placeholder="Erişim Şifresi">
         <label style="display:flex; align-items:center; gap:8px; margin-bottom:20px; cursor:pointer; font-size:13px; color:var(--text-muted);">
             <input type="checkbox" id="rememberCheck" style="accent-color:var(--primary-color)"> Beni Hatırla
@@ -163,7 +163,7 @@
     function checkLogin() {
         if (document.getElementById('passInput').value === _pArr.join('')) {
             if (document.getElementById('rememberCheck').checked) localStorage.setItem('map_session_v8', 'active');
-            else sessionStorage.setItem('map_session_v8', 'active');
+            else sessionStorage.setItem('map_session', 'active');
             showMainContent();
         } else { document.getElementById('error-msg').style.display = 'block'; }
     }
@@ -176,7 +176,7 @@
         initApp();
     }
 
-    window.onload = () => { if (localStorage.getItem('map_session_v8')==='active' || sessionStorage.getItem('map_session_v8')==='active') showMainContent(); };
+    window.onload = () => { if (localStorage.getItem('map_session_v8')==='active' || sessionStorage.getItem('map_session')==='active') showMainContent(); };
 
     function logout() { localStorage.clear(); sessionStorage.clear(); location.reload(); }
 
@@ -190,7 +190,7 @@
     }
 
     function initApp() {
-        const dbName = "MapStore_v8"; // Sürüm yükseltildi
+        const dbName = "MapStore_v8"; 
         let db, savedMarkers = [], customIcon = null;
         const map = L.map('map', { crs: L.CRS.Simple, minZoom: -3, maxZoom: 3, zoomControl: false });
         let mapLayer = null, markerLayer = L.layerGroup().addTo(map);
@@ -236,7 +236,6 @@
         };
 
         map.on('click', e => {
-            // Ekleme modu kapalıysa hiçbir şey yapma (kaydırmaya izin ver)
             if (!mapLayer || !document.getElementById('addMode').checked) return;
             
             const markerData = { 
@@ -256,19 +255,17 @@
             const isEditable = document.getElementById('editMode').checked;
             
             savedMarkers.forEach(d => {
-                // Renk ve parlama sınıfını belirle
                 let glowClass = '';
                 if (d.type === 'red') glowClass = 'glow-red';
                 else if (d.type === 'green') glowClass = 'glow-green';
                 else if (d.type === 'black') glowClass = 'glow-black';
 
-                // Şeffaf yapı ve özel parıltı sınıfları
                 const style = `
                     background-image:${d.img?'url('+d.img+')':'none'};
                 `;
                 
                 const icon = L.divIcon({ 
-                    className: `pixel-marker ${glowClass}`, // Sınıfı buraya ekledik
+                    className: `pixel-marker ${glowClass}`,
                     iconSize: [d.size, d.size], 
                     iconAnchor: [d.size/2, d.size/2], 
                     html: `<div style="${style}"></div>` 
