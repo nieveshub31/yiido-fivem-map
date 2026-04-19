@@ -29,7 +29,7 @@
         #main-content { display: none; }
         #map { height: 100vh; width: 100vw; background: var(--bg-dark); z-index: 1; }
 
-        /* KNGLRP Logo Buton */
+        /* Logo Buton */
         #main-logo {
             position: fixed; top: 20px; left: 20px; z-index: 1001;
             font-weight: 900; font-size: 16px; letter-spacing: 3px;
@@ -61,19 +61,17 @@
         
         input[type="file"], select { width: 100%; cursor: pointer; background: #2a3441; color: white; border: none; border-radius: 6px; padding: 8px; box-sizing: border-box; outline: none; font-size: 12px; }
         
-        .switch-group { display: flex; align-items: center; justify-content: space-between; background: var(--input-bg); padding: 15px; border-radius: 10px; border: 1px solid #2a3441; }
-        .switch { position: relative; display: inline-block; width: 44px; height: 22px; }
+        .switch-group { display: flex; align-items: center; justify-content: space-between; background: var(--input-bg); padding: 12px; border-radius: 10px; border: 1px solid #2a3441; margin-bottom: 8px; }
+        .switch { position: relative; display: inline-block; width: 40px; height: 20px; }
         .switch input { opacity: 0; width: 0; height: 0; }
         .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #333; transition: .4s; border-radius: 20px; }
-        .slider:before { position: absolute; content: ""; height: 16px; width: 16px; left: 3px; bottom: 3px; background-color: white; transition: .4s; border-radius: 50%; }
+        .slider:before { position: absolute; content: ""; height: 14px; width: 14px; left: 3px; bottom: 3px; background-color: white; transition: .4s; border-radius: 50%; }
         input:checked + .slider { background-color: var(--primary-color); }
-        input:checked + .slider:before { transform: translateX(22px); }
+        input:checked + .slider:before { transform: translateX(20px); }
 
         .btn-action { width: 100%; padding: 12px; border: none; border-radius: 10px; font-weight: bold; cursor: pointer; transition: 0.3s; margin-top: 10px; text-transform: uppercase; font-size: 11px; }
         .btn-clear { background: rgba(255, 68, 68, 0.1); color: var(--danger); border: 1px solid var(--danger); }
         .btn-clear:hover { background: var(--danger); color: #fff; }
-        .btn-backup { background: rgba(0, 255, 0, 0.1); color: var(--primary-color); border: 1px solid var(--primary-color); }
-        .btn-backup:hover { background: var(--primary-color); color: #000; }
         .btn-logout { background: #2a1212; color: #ff5555; border: 1px solid #441a1a; margin-top: 20px; }
 
         /* Marker Styles */
@@ -85,7 +83,7 @@
 
 <div id="login-overlay">
     <div class="login-box">
-        <h2>yyiido nieves - Map System</h2>
+        <h2>SİSTEME GİRİŞ</h2>
         <input type="password" id="passInput" placeholder="Erişim Şifresi">
         <label style="display:flex; align-items:center; gap:10px; margin-bottom:20px; cursor:pointer; font-size:14px; color:#888;">
             <input type="checkbox" id="rememberCheck"> Beni Hatırla
@@ -121,19 +119,20 @@
         </div>
 
         <div class="section">
-            <span class="section-title">SİSTEM MODU</span>
+            <span class="section-title">MOD KONTROLLERİ</span>
             <div class="switch-group">
-                <span style="font-size:12px;">Düzenleme Modu</span>
-                <label class="switch">
-                    <input type="checkbox" id="editMode" checked onchange="refreshMap()">
-                    <span class="slider"></span>
-                </label>
+                <span style="font-size:11px;">Düzenleme (Taşı/Sil)</span>
+                <label class="switch"><input type="checkbox" id="editMode" checked onchange="refreshMap()"><span class="slider"></span></label>
             </div>
+            <div class="switch-group">
+                <span style="font-size:11px; color:var(--primary-color);">İŞARETÇİ EKLEME</span>
+                <label class="switch"><input type="checkbox" id="addMode" checked><span class="slider"></span></label>
+            </div>
+            <p style="font-size: 9px; color: #888; margin: 5px 0;">* Hareket ettirmek için "Ekleme" modunu kapatın.</p>
         </div>
 
         <div class="section" style="border-top: 1px solid #333; padding-top: 15px;">
             <span class="section-title">VERİ YÖNETİMİ</span>
-            <button class="btn-action btn-backup" onclick="alert('Veriler yerel tarayıcı belleğine (IndexedDB) kaydedildi.')">VERİLERİ YEDEKLE</button>
             <button class="btn-action btn-clear" onclick="confirmClear()">TÜMÜNÜ SİL</button>
             <button class="btn-action btn-logout" onclick="logout()">OTURUMU KAPAT</button>
         </div>
@@ -162,7 +161,7 @@
         initApp();
     }
 
-    window.onload = () => { if (localStorage.getItem('map_session')==='active' || sessionStorage.getItem('map_session')==='active') showMainContent(); };
+    window.onload = () => { if (localStorage.getItem('map_session')==='active' || sessionStorage.setItem('map_session')==='active') showMainContent(); };
 
     function logout() { localStorage.clear(); sessionStorage.clear(); location.reload(); }
 
@@ -170,7 +169,7 @@
     function refreshMap() { if(globalApp) globalApp.render(); }
     
     function confirmClear() {
-        if(confirm("DİKKAT! Tüm işaretçiler kalıcı olarak silinecek. Emin misin aşkım?")) {
+        if(confirm("DİKKAT! Tüm işaretçiler kalıcı olarak silinecek. Emin misin?")) {
             if(globalApp) globalApp.clearMarkers();
         }
     }
@@ -222,8 +221,8 @@
         };
 
         map.on('click', e => {
-            // Düzenleme kapalıyken tıklama ile işaretçi eklenmez, harita yine de kaydırılabilir.
-            if (!mapLayer || !document.getElementById('editMode').checked) return;
+            // Sadece İşaretçi Modu AÇIKSA işaret ekler
+            if (!mapLayer || !document.getElementById('addMode').checked) return;
             
             const markerData = { 
                 id: Date.now(), lat: e.latlng.lat, lng: e.latlng.lng, 
