@@ -3,12 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>yyiido nieves - Map System v1.0</title>
+    <title>yyiido nieves - Map System v8.2</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <style>
         :root {
-            --primary-color: #00ff00; /* Neon Yeşil */
-            --danger-color: #ff4444;  /* Neon Kırmızı */
+            --primary-color: #00ff00; /* Neon Yeşil (Kenarlık) */
+            --danger-color: #ff4444;  /* Neon Kırmızı (Kenarlık) */
             --bg-dark: #080c10;
             --panel-bg: rgba(13, 17, 23, 0.96);
             --border-color: #21262d;
@@ -17,7 +17,10 @@
             --text-muted: #8b949e;
         }
         
-        body { margin: 0; padding: 0; background: var(--bg-dark); font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; color: var(--text-main); overflow: hidden; cursor: crosshair; } /* Fare işareti crosshair yapıldı */
+        /* Tüm ekranda fare işareti crosshair (+ yapıldı) */
+        body, html, * { cursor: crosshair !important; }
+        
+        body { margin: 0; padding: 0; background: var(--bg-dark); font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; color: var(--text-main); overflow: hidden; }
         * { -webkit-touch-callout: none; -webkit-user-select: none; user-select: none; box-sizing: border-box; }
 
         /* Giriş Ekranı */
@@ -82,19 +85,19 @@
         .btn-logout { background: #21262d; color: var(--text-main); border: 1px solid #30363d; margin-top: 20px; }
         .btn-logout:hover { background: #30363d; color: #fff; }
 
-        /* Marker Styles (Şeffaf Renk Dolgulu) */
+        /* Marker Styles (Dolu ve Şeffaf Renkli, Neon Yok) */
         .pixel-marker { border-radius: 50%; display: flex; align-items: center; justify-content: center; overflow: hidden; background: transparent !important; }
         .pixel-marker div { width: 100%; height: 100%; border-radius: 50%; background-size: cover !important; }
         
-        /* Özel Efektler ve Şeffaf Dolgular */
-        .glow-red { border: 3px solid var(--danger-color); box-shadow: 0 0 15px var(--danger-color); background-color: rgba(255, 68, 68, 0.15) !important; } /* Kırmızı şeffaf dolgu */
-        .glow-green { border: 3px solid var(--primary-color); box-shadow: 0 0 15px var(--primary-color); background-color: rgba(0, 255, 0, 0.15) !important; } /* Yeşil şeffaf dolgu */
-        .glow-black { border: 3px solid #000000; box-shadow: 0 0 5px rgba(255,255,255,0.2); background-color: transparent !important; } /* Siyah içi boş */
+        /* Özel Renkler, Şeffaf Dolgular, Neon Yok */
+        .fill-red { border: 3px solid var(--danger-color); background-color: rgba(255, 68, 68, 0.35) !important; box-shadow: 0 0 5px rgba(0,0,0,0.5); } /* Kırmızı şeffaf dolgu, parlamasız */
+        .fill-green { border: 3px solid var(--primary-color); background-color: rgba(0, 255, 0, 0.35) !important; box-shadow: 0 0 5px rgba(0,0,0,0.5); } /* Yeşil şeffaf dolgu, parlamasız */
+        .fill-black { border: 3px solid #000000; background-color: rgba(0, 0, 0, 0.5) !important; box-shadow: 0 0 5px rgba(255,255,255,0.2); } /* Siyah şeffaf dolgu, parlamasız */
     </style>
 </head>
 <body oncontextmenu="return false;"> <div id="login-overlay">
     <div class="login-box">
-        <h2>yyiido nieves - Map System</h2>
+        <h2>SİSTEME GİRİŞ</h2>
         <input type="password" id="passInput" placeholder="Erişim Şifresi">
         <label style="display:flex; align-items:center; gap:8px; margin-bottom:20px; cursor:pointer; font-size:13px; color:var(--text-muted);">
             <input type="checkbox" id="rememberCheck" style="accent-color:var(--primary-color)"> Beni Hatırla
@@ -120,9 +123,9 @@
             <div class="input-group">
                 <input type="file" id="markerImgInput" accept="image/*" style="margin-bottom:10px">
                 <select id="typeSelect">
-                    <option value="green">🟢 Yeşil Neon Çember</option>
-                    <option value="red">🔴 Kırmızı Neon Çember</option>
-                    <option value="black">⚫ Siyah Çember (Boş)</option>
+                    <option value="green">🟢 Yeşil Dolgulu Çember</option>
+                    <option value="red">🔴 Kırmızı Dolgulu Çember</option>
+                    <option value="black">⚫ Siyah Dolgulu Çember</option>
                     <option value="custom_img">🖼️ Özel İkon</option>
                 </select>
                 <div style="margin-top: 10px;">
@@ -255,17 +258,19 @@
             const isEditable = document.getElementById('editMode').checked;
             
             savedMarkers.forEach(d => {
-                let glowClass = '';
-                if (d.type === 'red') glowClass = 'glow-red';
-                else if (d.type === 'green') glowClass = 'glow-green';
-                else if (d.type === 'black') glowClass = 'glow-black';
+                // Renk ve dolgu sınıfını belirle, Neon Kapatıldı
+                let fillClass = '';
+                if (d.type === 'red') fillClass = 'fill-red';
+                else if (d.type === 'green') fillClass = 'fill-green';
+                else if (d.type === 'black') fillClass = 'fill-black';
 
+                // Düz, parlamasız kenarlıklar ve şeffaf dolgular
                 const style = `
                     background-image:${d.img?'url('+d.img+')':'none'};
                 `;
                 
                 const icon = L.divIcon({ 
-                    className: `pixel-marker ${glowClass}`,
+                    className: `pixel-marker ${fillClass}`, // Sınıfı buraya ekledik
                     iconSize: [d.size, d.size], 
                     iconAnchor: [d.size/2, d.size/2], 
                     html: `<div style="${style}"></div>` 
