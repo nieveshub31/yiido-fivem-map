@@ -128,22 +128,29 @@
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
-    // Şifre maskelenmiş veri (Base64)
+   // Güncellenmiş Türkçe karakter destekli Base64 şifre
     const _authKey = "a25nbHNpa2Vyc2FrYXRiaXJha8Sxcg==";
 
     function checkLogin() {
         const p = document.getElementById('passInput').value;
         const r = document.getElementById('rememberCheck').checked;
         
-        // Şifreyi UTF-8 destekli Base64'e çevirip karşılaştırır
-        const encoded = btoa(unescape(encodeURIComponent(p)));
-        
-        if (encoded === _authKey) {
-            if (r) localStorage.setItem('map_session', 'active');
-            else sessionStorage.setItem('map_session', 'active');
-            showMainContent();
-        } else { 
-            document.getElementById('error-msg').style.display = 'block'; 
+        try {
+            // Türkçe karakterleri (UTF-8) destekleyen güvenli dönüştürme yöntemi
+            const bytes = new TextEncoder().encode(p);
+            const binString = String.fromCodePoint(...bytes);
+            const encoded = btoa(binString);
+            
+            if (encoded === _authKey) {
+                if (r) localStorage.setItem('map_session', 'active');
+                else sessionStorage.setItem('map_session', 'active');
+                showMainContent();
+            } else { 
+                document.getElementById('error-msg').style.display = 'block'; 
+            }
+        } catch (e) {
+            console.error("Şifre işleme hatası:", e);
+            document.getElementById('error-msg').style.display = 'block';
         }
     }
 
