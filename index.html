@@ -12,6 +12,7 @@
             --panel-bg: rgba(20, 26, 34, 0.98);
             --border-color: #333;
             --input-bg: #1a222c;
+            --glow-color: rgba(0, 255, 0, 0.8);
         }
         
         body { margin: 0; padding: 0; background: var(--bg-dark); font-family: 'Segoe UI', sans-serif; color: white; overflow: hidden; }
@@ -28,54 +29,76 @@
         #main-content { display: none; }
         #map { height: 100vh; width: 100vw; background: var(--bg-dark); z-index: 1; }
 
+        /* Sol Üst KNGLRP Logosu ve Parıltı Efekti */
+        #main-logo {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            z-index: 1001; /* Panelin Toggle butonunun üzerinde */
+            font-weight: 900;
+            font-size: 16px;
+            letter-spacing: 3px;
+            color: #fff;
+            background: var(--panel-bg);
+            padding: 10px 20px;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            text-shadow: 0 0 5px #fff, 0 0 10px #fff, 0 0 20px var(--primary-color), 0 0 30px var(--primary-color);
+            animation: kngl-glow 2s infinite alternate;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+            pointer-events: none; /* Tıklamaları engeller, haritaya geçer */
+        }
+
+        @keyframes kngl-glow {
+            0% { text-shadow: 0 0 2px #fff, 0 0 5px var(--glow-color); }
+            100% { text-shadow: 0 0 5px #fff, 0 0 10px var(--glow-color), 0 0 20px var(--primary-color), 0 0 30px var(--primary-color); }
+        }
+
         /* Sol Kontrol Paneli */
         #controls {
-            position: fixed; top: 20px; left: 20px; z-index: 1000;
+            position: fixed; top: 70px; left: 20px; z-index: 1000; /* Logonun altında başlar */
             background: var(--panel-bg); padding: 25px; border-radius: 16px;
             border: 1px solid var(--border-color); width: 280px;
             box-shadow: 0 8px 32px rgba(0,0,0,0.6); backdrop-filter: blur(12px);
-            max-height: 90vh; 
-            overflow-x: hidden; /* Yatay kaydırmayı kesin olarak engeller */
-            overflow-y: auto;   /* Sadece dikey kaydırmaya izin verir */
+            max-height: 80vh; 
+            overflow-x: hidden;
+            overflow-y: auto;
             transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
         }
         
         #controls.collapsed { transform: translateX(-315px); }
 
-        /* KNGLRP Toggle Butonu */
+        /* Panel Toggle Butonu */
         #toggle-handle {
             position: absolute;
-            right: -46px; /* Butonun dışarı taşma miktarını düzelttim */
+            right: -35px;
             top: 20px;
-            width: 45px;
-            height: 100px;
+            width: 30px;
+            height: 60px;
             background: var(--panel-bg);
             border: 1px solid var(--primary-color);
             border-left: none;
-            border-radius: 0 12px 12px 0;
+            border-radius: 0 8px 8px 0;
             display: flex;
             align-items: center;
             justify-content: center;
             cursor: pointer;
             color: var(--primary-color);
-            font-weight: 900;
-            font-size: 11px;
-            letter-spacing: 2px;
-            writing-mode: vertical-rl;
-            text-orientation: mixed;
+            font-weight: bold;
+            font-size: 16px;
             transition: 0.3s;
             box-shadow: 5px 0 15px rgba(0,0,0,0.3);
-            pointer-events: auto;
         }
         #toggle-handle:hover { color: #fff; background: #1a222c; }
 
-        .panel-header { font-size: 16px; font-weight: 800; color: var(--primary-color); margin-bottom: 25px; border-bottom: 1px solid var(--border-color); padding-bottom: 12px; }
-        .section { margin-bottom: 25px; }
-        .section-title { font-size: 10px; font-weight: 900; color: #666; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 12px; display: block; }
-        .input-group { background: var(--input-bg); border-radius: 10px; padding: 12px; border: 1px solid #2a3441; margin-bottom: 10px; box-sizing: border-box; }
+        .panel-header { font-size: 14px; font-weight: 800; color: var(--primary-color); margin-bottom: 20px; border-bottom: 1px solid var(--border-color); padding-bottom: 10px; text-transform: uppercase; letter-spacing: 1px; }
+        .section { margin-bottom: 20px; }
+        .section-title { font-size: 10px; font-weight: 900; color: #666; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 10px; display: block; }
+        .input-group { background: var(--input-bg); border-radius: 10px; padding: 12px; border: 1px solid #2a3441; margin-bottom: 10px; }
         
-        input[type="file"], select { width: 100%; cursor: pointer; background: #2a3441; color: #ccc; border: none; border-radius: 6px; padding: 8px; box-sizing: border-box; }
-        select { margin-top: 8px; color: white; }
+        input[type="file"], select { width: 100%; cursor: pointer; background: #2a3441; color: white; border: none; border-radius: 6px; padding: 8px; box-sizing: border-box; outline: none; }
+        input[type="file"] { color: #ccc; font-size: 12px; }
+        select { margin-top: 8px; }
         
         .switch-group { display: flex; align-items: center; justify-content: space-between; background: var(--input-bg); padding: 15px; border-radius: 10px; border: 1px solid #2a3441; }
         .switch { position: relative; display: inline-block; width: 44px; height: 22px; }
@@ -85,8 +108,8 @@
         input:checked + .slider { background-color: var(--primary-color); }
         input:checked + .slider:before { transform: translateX(22px); }
 
-        input[type="range"] { width: 100%; accent-color: var(--primary-color); margin-top: 10px; }
-        .btn-action { width: 100%; padding: 14px; border: none; border-radius: 10px; font-weight: bold; cursor: pointer; transition: 0.3s; margin-top: 15px; }
+        input[type="range"] { width: 100%; accent-color: var(--primary-color); margin-top: 10px; cursor: pointer; }
+        .btn-action { width: 100%; padding: 14px; border: none; border-radius: 10px; font-weight: bold; cursor: pointer; transition: 0.3s; margin-top: 15px; text-transform: uppercase; letter-spacing: 1px; font-size: 12px; }
         .btn-logout { background: #2a1212; color: #ff5555; border: 1px solid #441a1a; }
         .btn-logout:hover { background: #441a1a; color: #fff; }
 
@@ -98,7 +121,7 @@
 
 <div id="login-overlay">
     <div class="login-box">
-        <h2>yyiido nieves - Map System</h2>
+        <h2>SİSTEME GİRİŞ</h2>
         <input type="password" id="passInput" placeholder="Erişim Şifresi">
         <label style="display:flex; align-items:center; gap:10px; margin-bottom:20px; cursor:pointer; font-size:14px; color:#888;">
             <input type="checkbox" id="rememberCheck"> Beni Hatırla
@@ -109,8 +132,10 @@
 </div>
 
 <div id="main-content">
+    <div id="main-logo">KNGLRP</div>
+
     <div id="controls">
-        <div id="toggle-handle" onclick="togglePanel()">KNGLRP</div>
+        <div id="toggle-handle" onclick="togglePanel()">◀</div>
         <div class="panel-header">KONTROL PANELİ</div>
         <div class="section">
             <span class="section-title">HARİTA KATMANI</span>
@@ -121,8 +146,8 @@
             <div class="input-group">
                 <input type="file" id="markerImgInput" accept="image/*" style="margin-bottom:12px">
                 <select id="typeSelect">
-                    <option value="red">🔴 Kırmızı Kare</option>
-                    <option value="green">🟢 Yeşil Kare</option>
+                    <option value="red">🔴 Kırmızı Nokta</option>
+                    <option value="green">🟢 Yeşil Nokta</option>
                     <option value="custom_img">🖼️ Özel İkon</option>
                 </select>
                 <input type="range" id="sizeSlider" min="10" max="150" value="40">
@@ -153,7 +178,10 @@
     }
 
     function togglePanel() {
-        document.getElementById('controls').classList.toggle('collapsed');
+        const panel = document.getElementById('controls');
+        const handle = document.getElementById('toggle-handle');
+        panel.classList.toggle('collapsed');
+        handle.innerText = panel.classList.contains('collapsed') ? '▶' : '◀';
     }
 
     function showMainContent() {
