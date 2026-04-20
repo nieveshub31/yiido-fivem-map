@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>yyiido nieves - Map System v1.1</title>
+    <title>yyiido nieves - Map System v1.2</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&family=JetBrains+Mono:wght@500;800&display=swap" rel="stylesheet">
     <style>
@@ -70,7 +70,7 @@
             flex-direction: column;
             gap: 5px;
             max-height: 90vh;
-            width: 260px;
+            width: 320px; /* Daha geniş, ferah */
             transition: 0.4s cubic-bezier(0.4, 0, 0.2, 1);
             transform: translateX(110%);
         }
@@ -100,49 +100,71 @@
             background: var(--panel-bg);
             border: 1px solid var(--border-color);
             border-radius: 12px;
-            padding: 15px;
+            padding: 20px;
             overflow-y: auto;
             backdrop-filter: blur(20px);
             margin-top: 55px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.7);
         }
         .checklist-header {
             font-family: var(--font-tech);
-            font-size: 10px;
+            font-size: 12px;
             font-weight: 800;
-            color: var(--text-muted);
+            color: var(--primary-color);
             text-transform: uppercase;
             letter-spacing: 2px;
-            margin-bottom: 15px;
-            padding-bottom: 8px;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
             border-bottom: 1px solid var(--border-color);
         }
 
+        /* YENİ MODERN LİSTE KARTLARI */
         .gta-list-item {
             background: var(--input-bg);
-            color: var(--text-main);
-            padding: 10px 15px;
-            margin-bottom: 4px;
-            border-radius: 6px;
+            padding: 14px 16px;
+            margin-bottom: 10px;
+            border-radius: 8px;
             font-family: var(--font-tech);
-            font-size: 11px;
-            font-weight: 700;
             text-transform: uppercase;
-            border: 1px solid transparent;
+            border: 1px solid var(--border-color);
+            border-left: 4px solid var(--primary-color); /* Dinamik renk yeri */
             cursor: pointer !important;
-            transition: all 0.2s ease;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             display: flex;
-            align-items: center;
-            justify-content: space-between;
+            flex-direction: column;
+            gap: 6px;
         }
         .gta-list-item:hover {
             border-color: var(--primary-color);
-            box-shadow: 0 0 10px rgba(0, 255, 0, 0.2);
+            box-shadow: 0 5px 15px rgba(0, 255, 0, 0.15);
             background: rgba(0,255,0,0.05);
+            transform: translateX(-5px);
         }
-        .gta-list-item .item-type {
-            width: 7px;
-            height: 7px;
+        .item-row-top {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            width: 100%;
+        }
+        .item-title {
+            font-size: 12px;
+            font-weight: 800;
+            color: #fff;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 85%;
+        }
+        .item-type-dot {
+            width: 10px;
+            height: 10px;
             border-radius: 50%;
+        }
+        .item-coords {
+            font-size: 9px;
+            color: var(--text-muted);
+            letter-spacing: 1px;
+            font-weight: 500;
         }
 
         /* --- DİĞER PANELLER --- */
@@ -213,7 +235,7 @@
 
         .fill-red { border: 3px solid var(--danger-color); background: rgba(255, 68, 68, 0.3) !important; }
         .fill-green { border: 3px solid var(--primary-color); background: rgba(0, 255, 0, 0.3) !important; }
-        .hollow-black { border: 3px solid #000; background: transparent !important; }
+        .hollow-black { border: 3px solid #333; background: transparent !important; }
     </style>
 </head>
 <body oncontextmenu="return false;">
@@ -236,7 +258,7 @@
 
     <div id="gta-checklist">
         <div class="checklist-inner">
-            <div class="checklist-header">KAYITLI NOKTALAR</div>
+            <div class="checklist-header">KAYITLI NOKTALAR VERİTABANI</div>
             <div id="checklist-items"></div>
         </div>
     </div>
@@ -393,7 +415,6 @@
         map.on('click', e => {
             if (!mapLayer || !document.getElementById('addMode').checked) return;
             
-            // Eğer kutu boşsa metni tamamen boş (null) bırakıyoruz.
             const userText = document.getElementById('markerTextInput').value.trim();
             const textToSave = userText !== "" ? userText : ""; 
 
@@ -417,17 +438,36 @@
 
             const isEditable = document.getElementById('editMode').checked;
             
-            savedMarkers.forEach(d => {
-                // Sadece ismi olanları sağdaki listeye ekle
-                if (d.text !== "") {
-                    const listItem = document.createElement('div');
-                    listItem.className = 'gta-list-item';
-                    let dotColor = d.type === 'red' ? 'var(--danger-color)' : (d.type === 'green' ? 'var(--primary-color)' : (d.type === 'black' ? '#333' : 'var(--info-color)'));
-                    listItem.innerHTML = `<span>${d.text}</span> <div class="item-type" style="background:${dotColor}; box-shadow: 0 0 5px ${dotColor}"></div>`;
-                    listItem.onclick = () => { map.flyTo([d.lat, d.lng], 1, { animate: true, duration: 1.5 }); };
-                    listContainer.appendChild(listItem);
-                }
+            savedMarkers.forEach((d, index) => {
+                
+                // --- LİSTE OLUŞTURMA (Her türlü oluşturulacak) ---
+                const listItem = document.createElement('div');
+                listItem.className = 'gta-list-item';
+                
+                let dotColor = d.type === 'red' ? 'var(--danger-color)' : (d.type === 'green' ? 'var(--primary-color)' : (d.type === 'black' ? '#555' : 'var(--info-color)'));
+                
+                // Soldaki renkli şerit
+                listItem.style.borderLeftColor = dotColor;
 
+                // İsimsiz ise özel metin ata
+                const displayName = d.text !== "" ? d.text : `[ İSİMSİZ NOKTA ]`;
+                
+                // Havalı koordinat formatı
+                const coordsText = `X: ${d.lng.toFixed(1)} | Y: ${d.lat.toFixed(1)}`;
+
+                listItem.innerHTML = `
+                    <div class="item-row-top">
+                        <span class="item-title">${displayName}</span>
+                        <div class="item-type-dot" style="background:${dotColor}; box-shadow: 0 0 8px ${dotColor}"></div>
+                    </div>
+                    <div class="item-coords">KOORD: ${coordsText}</div>
+                `;
+                
+                listItem.onclick = () => { map.flyTo([d.lat, d.lng], 1, { animate: true, duration: 1.5 }); };
+                listContainer.appendChild(listItem);
+
+
+                // --- HARİTA ÜZERİNDEKİ İŞARETÇİ ---
                 let mClass = d.type === 'red' ? 'fill-red' : (d.type === 'green' ? 'fill-green' : (d.type === 'black' ? 'hollow-black' : ''));
                 const icon = L.divIcon({ 
                     className: `pixel-marker`, 
@@ -445,6 +485,7 @@
                         const found = savedMarkers.find(x => x.id === d.id);
                         found.lat = ev.target.getLatLng().lat; found.lng = ev.target.getLatLng().lng;
                         db.transaction("markers", "readwrite").objectStore("markers").put(found);
+                        render(); // Liste koordinatlarını da güncellemesi için
                     });
                     m.on('contextmenu', () => {
                         db.transaction("markers", "readwrite").objectStore("markers").delete(d.id);
