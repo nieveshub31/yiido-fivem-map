@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>yyiido nieves - Map System v1.0</title>
+    <title>yyiido nieves - Map System v1.1</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&family=JetBrains+Mono:wght@500;800&display=swap" rel="stylesheet">
     <style>
@@ -60,7 +60,7 @@
         #main-logo:hover { border-color: var(--primary-color); color: var(--primary-color); }
         #help-btn { color: var(--info-color); border-color: rgba(0, 212, 255, 0.3); }
 
-        /* GTA STYLE CHECKLIST SIDEBAR */
+        /* --- MODERN AÇILIR LİSTE PANELİ --- */
         #gta-checklist {
             position: fixed;
             top: 15px;
@@ -68,20 +68,66 @@
             z-index: 1001;
             display: flex;
             flex-direction: column;
-            gap: 4px;
+            gap: 5px;
             max-height: 90vh;
-            overflow-y: auto;
-            width: 220px;
+            width: 260px;
+            transition: 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            transform: translateX(110%); /* Varsayılan kapalı */
         }
+        #gta-checklist.active { transform: translateX(0); }
+
+        #checklist-toggle {
+            position: fixed;
+            top: 15px;
+            right: 15px;
+            z-index: 1002;
+            background: var(--panel-bg);
+            color: var(--primary-color);
+            border: 1px solid var(--border-color);
+            padding: 12px 18px;
+            border-radius: 10px;
+            font-family: var(--font-tech);
+            font-weight: 900;
+            font-size: 14px;
+            cursor: pointer !important;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+            transition: 0.3s;
+        }
+        #checklist-toggle:hover { border-color: var(--primary-color); background: rgba(0,255,0,0.1); }
+        #checklist-toggle.active { background: var(--primary-color); color: #000; }
+
+        .checklist-inner {
+            background: var(--panel-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 15px;
+            overflow-y: auto;
+            backdrop-filter: blur(20px);
+            margin-top: 55px; /* Butonun altında kalması için */
+        }
+        .checklist-header {
+            font-family: var(--font-tech);
+            font-size: 10px;
+            font-weight: 800;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin-bottom: 15px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
         .gta-list-item {
-            background: rgba(0, 0, 0, 0.85);
-            color: white;
+            background: var(--input-bg);
+            color: var(--text-main);
             padding: 10px 15px;
+            margin-bottom: 4px;
+            border-radius: 6px;
             font-family: var(--font-tech);
             font-size: 11px;
-            font-weight: 800;
+            font-weight: 700;
             text-transform: uppercase;
-            border-right: 4px solid transparent;
+            border: 1px solid transparent;
             cursor: pointer !important;
             transition: all 0.2s ease;
             display: flex;
@@ -89,17 +135,17 @@
             justify-content: space-between;
         }
         .gta-list-item:hover {
-            background: #fff;
-            color: #000;
-            border-right: 4px solid var(--primary-color);
-            transform: translateX(-5px);
+            border-color: var(--primary-color);
+            box-shadow: 0 0 10px rgba(0, 255, 0, 0.2);
+            background: rgba(0,255,0,0.05);
         }
         .gta-list-item .item-type {
-            width: 8px;
-            height: 8px;
+            width: 7px;
+            height: 7px;
             border-radius: 50%;
         }
 
+        /* --- DİĞER PANELLER --- */
         #guide-panel {
             position: fixed; top: 75px; left: 15px; z-index: 2000;
             background: var(--panel-bg); padding: 25px; border-radius: 15px;
@@ -141,6 +187,7 @@
         .btn-export { background: #00d4ff; color: #000; }
         .btn-import { background: #f1c40f; color: #000; }
 
+        /* --- MARKER VE ETİKET --- */
         .pixel-marker { display: flex; align-items: center; justify-content: center; overflow: visible !important; }
         .icon-box { width: 100%; height: 100%; border-radius: 50%; background-size: cover !important; position: relative; display: flex; align-items: center; justify-content: center; }
         
@@ -185,13 +232,20 @@
         <div id="help-btn" onclick="toggleGuide()">?</div>
     </div>
 
-    <div id="gta-checklist"></div>
+    <button id="checklist-toggle" onclick="toggleChecklist()">[ &gt; ]</button>
+
+    <div id="gta-checklist">
+        <div class="checklist-inner">
+            <div class="checklist-header">KAYITLI NOKTALAR</div>
+            <div id="checklist-items"></div>
+        </div>
+    </div>
 
     <div id="guide-panel">
         <div class="panel-header" style="color:var(--info-color); border-color:var(--info-color)">KULLANIM KILAVUZU</div>
         <div class="guide-item"><span class="guide-key">VERİ</span> Tüm işaretçiler ve harita hafızaya otomatik kaydedilir.</div>
-        <div class="guide-item"><span class="guide-key">GTA LİSTESİ</span> Sağ taraftaki isimlere tıklarsan harita oraya süzülür.</div>
-        <div class="guide-item"><span class="guide-key">SOL TIK</span> Seçili stilde işaretçi ekler.</div>
+        <div class="guide-item"><span class="guide-key">LİSTE</span> Sağdaki <span class="guide-key">[ > ]</span> butonuna tıkla, listedeki isimlere tıklarsan harita oraya süzülür.</div>
+        <div class="guide-item"><span class="guide-key">SOL TIK</span> Seçili stilde işaretçi ekler. Etiket yazmazsan "İŞARET XX" yazar.</div>
         <div class="guide-item"><span class="guide-key">SAĞ TIK</span> İşaretçiyi kalıcı olarak siler (Düzenleme açıkken).</div>
         <button class="btn-action" style="background:var(--info-color); color:#000; margin-top:10px;" onclick="toggleGuide()">ANLAŞILDI</button>
     </div>
@@ -263,6 +317,13 @@
         initApp();
     }
 
+    // --- PANEL KONTROLLERİ ---
+    function toggleChecklist() {
+        document.getElementById('gta-checklist').classList.toggle('active');
+        const btn = document.getElementById('checklist-toggle');
+        btn.classList.toggle('active');
+        btn.innerText = btn.classList.contains('active') ? '[ < ]' : '[ > ]';
+    }
     function toggleGuide() { document.getElementById('guide-panel').classList.toggle('active'); }
     window.onload = () => { if (sessionStorage.getItem('map_auth') === 'true') showMainContent(); };
     function logout() { sessionStorage.clear(); location.reload(); }
@@ -334,11 +395,17 @@
 
         map.on('click', e => {
             if (!mapLayer || !document.getElementById('addMode').checked) return;
+            
+            // --- ETIKET YAZISI ÇÖZÜMÜ ---
+            const userText = document.getElementById('markerTextInput').value.trim();
+            // Eğer kutu boşsa varsayılan isim ver, doluysa onu kullan.
+            const textToSave = userText !== "" ? userText : "ISARET " + (savedMarkers.length + 1);
+
             const markerData = { 
                 id: Date.now(), lat: e.latlng.lat, lng: e.latlng.lng, 
                 size: parseInt(document.getElementById('sizeSlider').value), 
                 type: document.getElementById('typeSelect').value,
-                text: document.getElementById('markerTextInput').value.trim() || "ISARET " + (savedMarkers.length + 1),
+                text: textToSave, // Artık "İŞARETÇİ" değil, dinamik isim.
                 img: document.getElementById('typeSelect').value === 'custom_img' ? customIcon : null
             };
             db.transaction("markers", "readwrite").objectStore("markers").add(markerData);
@@ -349,25 +416,25 @@
 
         function render() {
             markerLayer.clearLayers();
-            const checklistContainer = document.getElementById('gta-checklist');
-            checklistContainer.innerHTML = ''; // Listeyi temizle
+            const listContainer = document.getElementById('checklist-items');
+            listContainer.innerHTML = ''; // Listeyi temizle
 
             const isEditable = document.getElementById('editMode').checked;
             
             savedMarkers.forEach(d => {
-                // GTA LISTESI EKLEME
+                // --- MODERN LİSTE EKLEME ---
                 const listItem = document.createElement('div');
                 listItem.className = 'gta-list-item';
-                let dotColor = d.type === 'red' ? 'var(--danger-color)' : (d.type === 'green' ? 'var(--primary-color)' : '#fff');
-                listItem.innerHTML = `<span>${d.text}</span> <div class="item-type" style="background:${dotColor}"></div>`;
+                let dotColor = d.type === 'red' ? 'var(--danger-color)' : (d.type === 'green' ? 'var(--primary-color)' : (d.type === 'black' ? '#333' : 'var(--info-color)'));
+                listItem.innerHTML = `<span>${d.text}</span> <div class="item-type" style="background:${dotColor}; box-shadow: 0 0 5px ${dotColor}"></div>`;
                 
-                // TIKLAYINCA ORAYA GITME
+                // TIKLAYINCA SÜZÜLEREK ORAYA GITME
                 listItem.onclick = () => {
                     map.flyTo([d.lat, d.lng], 1, { animate: true, duration: 1.5 });
                 };
-                checklistContainer.appendChild(listItem);
+                listContainer.appendChild(listItem);
 
-                // HARITA MARKERLARI
+                // --- HARITA MARKERLARI ---
                 let mClass = d.type === 'red' ? 'fill-red' : (d.type === 'green' ? 'fill-green' : (d.type === 'black' ? 'hollow-black' : ''));
                 const icon = L.divIcon({ 
                     className: `pixel-marker`, 
